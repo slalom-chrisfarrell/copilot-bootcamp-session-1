@@ -37,6 +37,24 @@ const server = setupServer(
         created_at: new Date().toISOString(),
       })
     );
+  }),
+  
+  // DELETE /api/items/:id handler
+  rest.delete('/api/items/:id', (req, res, ctx) => {
+    const { id } = req.params;
+    
+    if (!id || isNaN(Number(id))) {
+      return res(
+        ctx.status(400),
+        ctx.json({ error: 'Valid item ID is required' })
+      );
+    }
+    
+    // Simulate successful deletion
+    return res(
+      ctx.status(200),
+      ctx.json({ message: 'Item deleted successfully' })
+    );
   })
 );
 
@@ -131,6 +149,34 @@ describe('App Component', () => {
     // Wait for empty state message
     await waitFor(() => {
       expect(screen.getByText('No items found. Add some!')).toBeInTheDocument();
+    });
+  });
+
+  test('allows deleting an item', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+
+    // Wait for items to load
+    await waitFor(() => {
+      expect(screen.getByText('Test Item 1')).toBeInTheDocument();
+      expect(screen.getByText('Test Item 2')).toBeInTheDocument();
+    });
+
+    // Find and click the first delete button
+    const deleteButtons = screen.getAllByText('Delete');
+    expect(deleteButtons).toHaveLength(2);
+
+    // Click the first delete button
+    const user = userEvent.setup();
+    await act(async () => {
+      await user.click(deleteButtons[0]);
+    });
+
+    // Item should be removed from the UI
+    await waitFor(() => {
+      expect(screen.queryByText('Test Item 1')).not.toBeInTheDocument();
+      expect(screen.getByText('Test Item 2')).toBeInTheDocument();
     });
   });
 });
